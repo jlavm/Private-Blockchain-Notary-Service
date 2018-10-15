@@ -222,7 +222,7 @@ class Blockchain {
     }
 
     // prints the chain of block
-    printChain() {
+    getBlockChain() {
         return new Promise((resolve, reject) => {
             getAllLevelDBData().then((data) => {
                 resolve(data);

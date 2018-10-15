@@ -3,9 +3,15 @@ const Block = require('./block');
 const Blockchain = require('./simpleChain');
 const bodyParser = require('body-parser');
 const path = require('path');
+const Star = require('./star');
+const {
+    encodeStory,
+    decodeStory
+} = require('./encoder');
 
 const app = express()
 const blockchain = new Blockchain()
+const starRegistry = {}
 
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({
@@ -16,25 +22,9 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname + '/index.html'));
 })
 
-app.param('blockheight', function(req, res, next, blockheight) {
-    // check if blockheight exists
-    blockchain.getBlockHeight().then((height) => {
-        if (blockheight >= height) {
-            res.json({
-                error: 'Invalid blockheight'
-            })
-        } else {
-            next();
-        }
-    }).catch((err) => {
-        res.json({
-            error: err
-        })
-    });
-});
 
 app.get('/block/chain', (req, res) => {
-    blockchain.printChain().then((block) => {
+    blockchain.getBlockChain().then((block) => {
         res.json(block)
     }).catch((err) => {
         res.json({
@@ -45,6 +35,7 @@ app.get('/block/chain', (req, res) => {
 
 app.get('/block/:blockheight', (req, res) => {
     blockchain.getBlock(req.params.blockheight).then((block) => {
+        block.body.star.storyDecoded = decodeStory(block.body.star.story)
         res.json(block)
     }).catch((err) => {
         res.json({
@@ -53,18 +44,66 @@ app.get('/block/:blockheight', (req, res) => {
     });
 })
 
-app.post('/block', (req, res) => {
-    var body = req.body.body
-    console.log(body)
-    if (body === undefined) {
-        return res.json({
-            error: 'You must specify a body'
+app.get('/stars/hash::hash', (req, res) => {
+    var hashRequested = req.params.hash;
+    blockchain.getBlockChain().then((chain) => {
+        var chainFiltered = chain.filter(block => block.hash === hashRequested);
+        if (chainFiltered.length > 0) {
+            chainFiltered[0].body.star.storyDecoded = decodeStory(chainFiltered[0].body.star.story);
+            res.json(chainFiltered[0]);
+        } else {
+            return res.json({
+                error: 'Unable to find a registered star with hash:' + hashRequested
+            })
+        }
+    }).catch((err) => {
+        console.log(err)
+        res.json({
+            error: 'Error Retrieving BlockChain'
         })
-    } else if (body.trim() === '') {
+    });
+})
+
+app.get('/stars/address::address', (req, res) => {
+    res.json({
+        error: 'Not Implemented'
+    })
+})
+
+app.post('/block', (req, res) => {
+
+    var starAddress = req.body.address;
+    var star = req.body.star;
+
+    /*if(!starRegistry.hasOwnProperty(starAddress)){
+        return res.json({ error: 'Address not valid.' })
+    }*/
+
+    var startFieldsError = "Invalid fields: ";
+    var startError = false;
+
+    if (star.dec === undefined || star.dec.trim() === '') {
+        startFieldsError = startFieldsError + 'declination, ';
+        startError = true;
+    }
+    if (star.ra === undefined || star.ra.trim() === '') {
+        startFieldsError = startFieldsError + 'right ascension, ';
+        startError = true;
+    }
+    if (star.story === undefined || star.story.trim() === '') {
+        startFieldsError = startFieldsError + 'story, ';
+        startError = true;
+    }
+
+    if (startError == true) {
         return res.json({
-            error: 'Empty body'
+            error: startFieldsError
         })
     }
+
+    star.story = encodeStory(star.story)
+    var body = new Star(starAddress, star);
+
     blockchain.addBlock(new Block(body)).then((block) => {
         res.json(block)
     }).catch((err) => {
@@ -74,13 +113,25 @@ app.post('/block', (req, res) => {
     });
 })
 
+app.post('/requestValidation', (req, res) => {
+    res.json({
+        error: 'Not Implemented'
+    })
+})
+
+app.post('/message-signature/validate', (req, res) => {
+    res.json({
+        error: 'Not Implemented'
+    })
+})
+
 app.use(function(err, req, res, next) {
     console.error(err.stack);
     res.status(500).send('Something broke!');
 });
 
 app.all('*', function(req, res) {
-  res.redirect("/");
+    res.redirect("/");
 });
 
 app.listen(8000, () => console.log('Example app listening on port 8000!'))
