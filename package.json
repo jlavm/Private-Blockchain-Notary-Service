@@ -1,7 +1,7 @@
 {
-  "name": "restfulblockchain",
+  "name": "privateblockchainnotaryservice",
   "version": "1.0.0",
-  "description": "RESTful web API for your private blockchain",
+  "description": "Implements a Star Registry service that allows users to claim ownership of their favorite star in the night sky",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -16,10 +16,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/navlin07/RESTful-web-API-for-your-private-blockchain.git"
+    "url": "git+https://github.com/navlin07/Private-Blockchain-Notary-Service.git"
   },
   "bugs": {
-    "url": "https://github.com/navlin07/RESTful-web-API-for-your-private-blockchain.git/issues"
+    "url": "https://github.com/navlin07/Private-Blockchain-Notary-Service.git/issues"
   },
-  "homepage": "https://github.com/navlin07/RESTful-web-API-for-your-private-blockchain.git#readme"
+  "homepage": "https://github.com/navlin07/Private-Blockchain-Notary-Service.git#readme"
 }

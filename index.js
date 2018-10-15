@@ -69,4 +69,8 @@ app.use(function(err, req, res, next) {
     res.status(500).send('Something broke!');
 });
 
+app.all('*', function(req, res) {
+  res.redirect("/");
+});
+
 app.listen(8000, () => console.log('Example app listening on port 8000!'))

@@ -2,9 +2,12 @@
 |  Learn more: Crypto-js: https://github.com/brix/crypto-js  |
 |  =========================================================*/
 const SHA256 = require('crypto-js/sha256');
-const level = require('level');
-const chainDB = './chaindata';
-const db = level(chainDB);
+const {
+    getLevelDBDataCount,
+    getLevelDBData,
+    addDataToLevelDB,
+    addLevelDBData
+} = require('./levelSandbox');
 const Block = require('./block');
 // function for adding two numbers.
 const addArray = (a, b) => a + b;
@@ -33,7 +36,7 @@ class Blockchain {
                             // Block hash with SHA256 using newBlock and converting to a string
                             newBlock.hash = SHA256(JSON.stringify(newBlock)).toString();
                             // Adding block object to db
-                            this.addDataToLevelDB(newBlock.height, newBlock).then((result) => {
+                            addDataToLevelDB(newBlock.height, newBlock).then((result) => {
                                 console.log("Result: " + result);
                                 resolve(result);
                             }).catch(error => {
@@ -63,7 +66,7 @@ class Blockchain {
                 genesisBlock.height = 0;
                 genesisBlock.time = new Date().getTime().toString().slice(0, -3);
                 genesisBlock.hash = SHA256(JSON.stringify(genesisBlock)).toString();
-                this.addDataToLevelDB(0, genesisBlock).then((result) => {
+                addDataToLevelDB(0, genesisBlock).then((result) => {
                     console.log("Genesis Result: " + result);
                 }).catch(error => {
                     console.log("Genesis addBlock Error" + error);
@@ -76,31 +79,22 @@ class Blockchain {
 
     // Get block height
     getBlockHeight() {
-        return new Promise(function(resolve, reject) {
-            let i = 0;
-            db.createReadStream()
-                .on('data', function() {
-                    i++;
-                })
-                .on('error', function() {
-                    reject("BlockHeight Could not retrieve chain length");
-                })
-                .on('close', function() {
-                    resolve(i);
-                });
+        return new Promise((resolve, reject) => {
+            getLevelDBDataCount().then((height) => {
+                resolve(height);
+            }).catch((err) => {
+                console.log("getBlockHeight: " + err);
+            });
         });
     }
 
     // get block
     getBlock(blockHeight) {
         return new Promise((resolve, reject) => {
-            db.get(blockHeight, function(err, value) {
-                if (err) {
-                    console.log('getBlock Not found!', err);
-                    reject(err);
-                };
-                // return object as a single string
-                resolve(JSON.parse(value));
+            getLevelDBData(blockHeight).then((block) => {
+                resolve(block);
+            }).catch((err) => {
+                console.log("getBlock: " + err);
             });
         });
     }
@@ -111,7 +105,7 @@ class Blockchain {
             // get block object
             this.getBlock(blockHeight).then((block) => {
                 block.body = data;
-                this.addDataToLevelDB(blockHeight, block).then((result) => {
+                addDataToLevelDB(blockHeight, block).then((result) => {
                     console.log("Result: " + result);
                     resolve(result);
                 }).catch(error => {
@@ -225,52 +219,6 @@ class Blockchain {
 
         });
     }
-
-    // Get data from levelDB with key
-    getLevelDBData(key) {
-        return new Promise((resolve, reject) => {
-            db.get(key, function(err, value) {
-                if (err) {
-                    console.log('getLevelData Not found!', err);
-                    reject(err);
-                };
-                resolve(value);
-            })
-        });
-    }
-
-    // Add data to levelDB with value
-    addDataToLevelDB(height, newBlock) {
-        return new Promise(function(resolve, reject) {
-            let i = 0;
-            db.createReadStream().on('data', function(data) {
-                i++;
-            }).on('error', function(err) {
-                reject('Unable to read data stream!', err);
-            }).on('close', function() {
-                addLevelDBData(height, JSON.stringify(newBlock)).then((result) => {
-                    console.log("Block added");
-                    resolve(result)
-                }).catch(error => {
-                    console.log("addBlock Error" + error);
-                    reject('Unable to addBlock!', error);
-                });
-            });
-        });
-    }
-}
-
-// Add data to levelDB with key/value pair
-function addLevelDBData(key, value) {
-    return new Promise((resolve, reject) => {
-        db.put(key, value, function(err) {
-            if (err) {
-                console.log('Block ' + key + ' submission failed', err);
-                reject(err);
-            };
-            resolve(value);
-        });
-    });
 }
 
 module.exports = Blockchain
