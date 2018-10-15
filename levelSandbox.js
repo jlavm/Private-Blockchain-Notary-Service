@@ -5,6 +5,23 @@ const level = require('level');
 const chainDB = './chaindata';
 const db = level(chainDB);
 
+// Retrieve all data in the chain
+function getAllLevelDBData() {
+    return new Promise(function(resolve, reject) {
+        let dataChain = []
+        db.createReadStream()
+            .on('data', function(data) {
+                dataChain.push(data.value);
+            })
+            .on('error', function() {
+                reject("BlockHeight Could not retrieve all data");
+            })
+            .on('close', function() {
+                resolve(dataChain.map(e => JSON.parse(e)));
+            });
+    });
+}
+
 // Get count from levelDB
 function getLevelDBDataCount() {
     return new Promise(function(resolve, reject) {
@@ -73,5 +90,6 @@ module.exports = {
     getLevelDBDataCount,
     getLevelDBData,
     addDataToLevelDB,
-    addLevelDBData
+    addLevelDBData,
+    getAllLevelDBData
 };

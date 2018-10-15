@@ -6,7 +6,8 @@ const {
     getLevelDBDataCount,
     getLevelDBData,
     addDataToLevelDB,
-    addLevelDBData
+    addLevelDBData,
+    getAllLevelDBData
 } = require('./levelSandbox');
 const Block = require('./block');
 // function for adding two numbers.
@@ -38,7 +39,7 @@ class Blockchain {
                             // Adding block object to db
                             addDataToLevelDB(newBlock.height, newBlock).then((result) => {
                                 console.log("Result: " + result);
-                                resolve(result);
+                                resolve(JSON.parse(result));
                             }).catch(error => {
                                 console.log("addBlock Error" + error);
                             });
@@ -217,6 +218,17 @@ class Blockchain {
                 reject(err);
             });
 
+        });
+    }
+
+    // prints the chain of block
+    printChain() {
+        return new Promise((resolve, reject) => {
+            getAllLevelDBData().then((data) => {
+                resolve(data);
+            }).catch((err) => {
+                console.log("getAllData: " + err);
+            });
         });
     }
 }

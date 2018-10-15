@@ -33,6 +33,16 @@ app.param('blockheight', function(req, res, next, blockheight) {
     });
 });
 
+app.get('/block/chain', (req, res) => {
+    blockchain.printChain().then((block) => {
+        res.json(block)
+    }).catch((err) => {
+        res.json({
+            error: 'Error Retrieving chain'
+        })
+    });
+})
+
 app.get('/block/:blockheight', (req, res) => {
     blockchain.getBlock(req.params.blockheight).then((block) => {
         res.json(block)
