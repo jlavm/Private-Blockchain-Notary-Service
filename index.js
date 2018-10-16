@@ -131,29 +131,44 @@ app.post('/block', (req, res) => {
 app.post('/requestValidation', (req, res) => {
     var addressRequested = req.body.address;
 
-    if (addressRequested === undefined || addressRequested.trim() === '') { 
+    if (addressRequested === undefined || addressRequested.trim() === '') {
         return res.send(`Address not valid!`)
     }
+    
     var validationTimeWindow = 300;
+    
     var requestTimeStamp = new Date().getTime();
+    
     var message = `${addressRequested}:${requestTimeStamp}:starRegistry`;
-    var response = { addressRequested, message, validationTimeWindow, requestTimeStamp: requestTimeStamp }
+    
+    var response = {
+        addressRequested,
+        message,
+        validationTimeWindow,
+        requestTimeStamp: requestTimeStamp
+    }
 
     if (starRegistry.hasOwnProperty(addressRequested)) {
         validationTimeWindow = starRegistry[addressRequested].validationTimeWindow;
-        return res.json({ addressRequested, message, validationTimeWindow, requestTimeStamp: requestTimeStamp })
+        return res.json({
+            addressRequested,
+            message,
+            validationTimeWindow,
+            requestTimeStamp: requestTimeStamp
+        })
     }
 
     //add to the registry
-    starRegistry[addressRequested] = { message, requestTimeStamp, validationTimeWindow }
+    starRegistry[addressRequested] = {
+        message,
+        requestTimeStamp,
+        validationTimeWindow
+    }
 
     res.json(response)
 
     const interval = setInterval(() => {
         starRegistry[addressRequested] && starRegistry[addressRequested].validationTimeWindow--
-        // check if starRegistry has star registeration request or not
-        // if there is a registeration request
-        // then check whether the validationWindow is timed out or not
         if (!starRegistry.hasOwnProperty(addressRequested) || starRegistry[addressRequested].validationTimeWindow <= 0) {
             delete starRegistry[addressRequested]
             clearInterval(interval)
