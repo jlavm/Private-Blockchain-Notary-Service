@@ -8,6 +8,7 @@ const {
     encodeStory,
     decodeStory
 } = require('./encoder');
+const bitcoinMessage = require('bitcoinjs-message');
 
 const app = express()
 const blockchain = new Blockchain()
@@ -69,7 +70,7 @@ app.get('/stars/address::address', (req, res) => {
         var chainFiltered = chain.filter(block => block.body.address === addressRequested);
         if (chainFiltered.length > 0) {
             chainFiltered.map(s => {
-                s.body.star.storyDecoded = decodeStory(s.body.star.story) 
+                s.body.star.storyDecoded = decodeStory(s.body.star.story)
                 return s
             })
             res.json(chainFiltered);
@@ -86,7 +87,6 @@ app.get('/stars/address::address', (req, res) => {
 })
 
 app.post('/block', (req, res) => {
-
     var starAddress = req.body.address;
     var star = req.body.star;
 
@@ -129,9 +129,36 @@ app.post('/block', (req, res) => {
 })
 
 app.post('/requestValidation', (req, res) => {
-    res.json({
-        error: 'Not Implemented'
-    })
+    var addressRequested = req.body.address;
+
+    if (addressRequested === undefined || addressRequested.trim() === '') { 
+        return res.send(`Address not valid!`)
+    }
+    var validationTimeWindow = 300;
+    var requestTimeStamp = new Date().getTime();
+    var message = `${addressRequested}:${requestTimeStamp}:starRegistry`;
+    var response = { addressRequested, message, validationTimeWindow, requestTimeStamp: requestTimeStamp }
+
+    if (starRegistry.hasOwnProperty(addressRequested)) {
+        validationTimeWindow = starRegistry[addressRequested].validationTimeWindow;
+        return res.json({ addressRequested, message, validationTimeWindow, requestTimeStamp: requestTimeStamp })
+    }
+
+    //add to the registry
+    starRegistry[addressRequested] = { message, requestTimeStamp, validationTimeWindow }
+
+    res.json(response)
+
+    const interval = setInterval(() => {
+        starRegistry[addressRequested] && starRegistry[addressRequested].validationTimeWindow--
+        // check if starRegistry has star registeration request or not
+        // if there is a registeration request
+        // then check whether the validationWindow is timed out or not
+        if (!starRegistry.hasOwnProperty(addressRequested) || starRegistry[addressRequested].validationTimeWindow <= 0) {
+            delete starRegistry[addressRequested]
+            clearInterval(interval)
+        }
+    }, 1000)
 })
 
 app.post('/message-signature/validate', (req, res) => {

@@ -69,6 +69,30 @@ localhost:8000/stars/hash:a59e9e399bc17c2db32a7a87379a8012f2c8e08dd661d7c0a6a484
 curl "http://localhost:8000/stars/hash:a59e9e399bc17c2db32a7a87379a8012f2c8e08dd661d7c0a6a4845d4f3ffb9f"
 ```
 
+### POST: /requestValidation
+
+```
+localhost:8000/requestValidation
+```
+
+With body:
+
+```
+{
+  "address": "1JHoNc4exPSTgwduGPAjMkPYC7egxVehs8"
+}
+```
+
+With curl:
+
+```
+curl -X "POST" "http://localhost:8000/requestValidation" \
+     -H 'Content-Type: application/json; charset=utf-8' \
+     -d $'{
+  "address": "142BDCeSGbXjWKaAnYXbMpZ6sbrSAo3DpZ"
+}'
+```
+
 ### POST: /block
 
 ```
