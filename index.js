@@ -65,9 +65,28 @@ app.get('/stars/hash::hash', (req, res) => {
 })
 
 app.get('/stars/address::address', (req, res) => {
-    res.json({
-        error: 'Not Implemented'
-    })
+    var addressRequested = req.params.address;
+    blockchain.getBlockChain().then((chain) => {
+        console.log(chain)
+        var chainFiltered = chain.filter(block => block.body.address === addressRequested);
+        console.log(chainFiltered)
+        if (chainFiltered.length > 0) {
+            chainFiltered.map(s => {
+                s.body.star.storyDecoded = decodeStory(s.body.star.story) 
+                return s
+            })
+            res.json(chainFiltered);
+        } else {
+            return res.json({
+                error: 'Unable to find a registered star with address:' + addressRequested
+            })
+        }
+    }).catch((err) => {
+        console.log(err)
+        res.json({
+            error: 'Error Retrieving BlockChain'
+        })
+    });
 })
 
 app.post('/block', (req, res) => {
