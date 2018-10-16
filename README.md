@@ -2,16 +2,6 @@
 
 This project implements a Star Registry service that allows users to claim ownership of their favorite star in the night sky.
 
-With this project you can target two endpoints:
-
-GET: /stars/hash:[HASH]
-GET: /stars/address:[ADDRESS]
-GET: /block/[HEIGHT]
-
-POST: /block
-POST: /requestValidation
-POST: /message-signature/validate
-
 ## Node framework
 
 The framework selected is Express.js
@@ -99,6 +89,8 @@ With body:
   }
 }
 ```
+
+With curl:
 
 ```
 curl -X "POST" "http://localhost:8000/block" \
