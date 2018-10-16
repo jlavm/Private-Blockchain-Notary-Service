@@ -57,7 +57,6 @@ app.get('/stars/hash::hash', (req, res) => {
             })
         }
     }).catch((err) => {
-        console.log(err)
         res.json({
             error: 'Error Retrieving BlockChain'
         })
@@ -67,9 +66,7 @@ app.get('/stars/hash::hash', (req, res) => {
 app.get('/stars/address::address', (req, res) => {
     var addressRequested = req.params.address;
     blockchain.getBlockChain().then((chain) => {
-        console.log(chain)
         var chainFiltered = chain.filter(block => block.body.address === addressRequested);
-        console.log(chainFiltered)
         if (chainFiltered.length > 0) {
             chainFiltered.map(s => {
                 s.body.star.storyDecoded = decodeStory(s.body.star.story) 
@@ -82,7 +79,6 @@ app.get('/stars/address::address', (req, res) => {
             })
         }
     }).catch((err) => {
-        console.log(err)
         res.json({
             error: 'Error Retrieving BlockChain'
         })
