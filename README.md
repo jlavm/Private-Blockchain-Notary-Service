@@ -93,6 +93,33 @@ curl -X "POST" "http://localhost:8000/requestValidation" \
 }'
 ```
 
+### POST: /message-signature/validate
+
+```
+localhost:8000//message-signature/validate
+```
+
+With body:
+
+```
+{
+  "address": "19xaiMqayaNrn3x7AjV5cU4Mk5f5prRVpL",
+  "signature":"H8K4+1MvyJo9tcr2YN2KejwvX1oqneyCH+fsUL1z1WBdWmswB9bijeFfOfMqK68kQ5RO6ZxhomoXQG3fkLaBl+Q="
+}
+```
+
+With curl:
+
+```
+curl -X POST \
+  http://localhost:8000/api/message-signature/validate \
+  -H 'Content-Type: application/json' \
+  -H 'cache-control: no-cache' \
+  -d '{
+    "address":"19xaiMqayaNrn3x7AjV5cU4Mk5f5prRVpL", "signature":"H8K4+1MvyJo9tcr2YN2KejwvX1oqneyCH+fsUL1z1WBdWmswB9bijeFfOfMqK68kQ5RO6ZxhomoXQG3fkLaBl+Q="
+}'
+```
+
 ### POST: /block
 
 ```

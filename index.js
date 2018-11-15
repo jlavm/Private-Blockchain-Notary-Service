@@ -12,7 +12,7 @@ const bitcoinMessage = require('bitcoinjs-message');
 
 const app = express()
 const blockchain = new Blockchain()
-const starRegistry = {}
+const mempool = {}
 
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({
@@ -87,25 +87,33 @@ app.get('/stars/address::address', (req, res) => {
 })
 
 app.post('/block', (req, res) => {
-    var starAddress = req.body.address;
-    var star = req.body.star;
+    var addressRequested = req.body.address;
+    var starRequested = req.body.star;
 
-    /*if(!starRegistry.hasOwnProperty(starAddress)){
-        return res.json({ error: 'Address not valid.' })
-    }*/
+    if (addressRequested === undefined || addressRequested.trim() === '') {
+        return res.send(`Argument address not valid!`)
+    }
+
+    if(!mempool.hasOwnProperty(addressRequested)){
+        return res.json({ error: 'Address not registered!' })
+    }
+
+    if(!mempool[addressRequested].valid){
+        return res.json({ error: 'Address has not validated!' })
+    }
 
     var startFieldsError = "Invalid fields: ";
     var startError = false;
 
-    if (star.dec === undefined || star.dec.trim() === '') {
+    if (starRequested.dec === undefined || starRequested.dec.trim() === '') {
         startFieldsError = startFieldsError + 'declination, ';
         startError = true;
     }
-    if (star.ra === undefined || star.ra.trim() === '') {
+    if (starRequested.ra === undefined || starRequested.ra.trim() === '') {
         startFieldsError = startFieldsError + 'right ascension, ';
         startError = true;
     }
-    if (star.story === undefined || star.story.trim() === '') {
+    if (starRequested.story === undefined || starRequested.story.trim() === '') {
         startFieldsError = startFieldsError + 'story, ';
         startError = true;
     }
@@ -116,10 +124,15 @@ app.post('/block', (req, res) => {
         })
     }
 
-    star.story = encodeStory(star.story)
-    var body = new Star(starAddress, star);
+    if (Buffer.byteLength(starRequested.story, 'ascii') > 500) {
+        return res.json({ error: 'Story length not valid!' })
+    }
+
+    starRequested.story = encodeStory(starRequested.story);
+    var body = new Star(addressRequested, starRequested);
 
     blockchain.addBlock(new Block(body)).then((block) => {
+        delete mempool[addressRequested]
         res.json(block)
     }).catch((err) => {
         res.json({
@@ -129,57 +142,89 @@ app.post('/block', (req, res) => {
 })
 
 app.post('/requestValidation', (req, res) => {
-    var addressRequested = req.body.address;
+    const addressRequested = req.body.address;
 
     if (addressRequested === undefined || addressRequested.trim() === '') {
-        return res.send(`Address not valid!`)
+        return res.send(`Argument address not valid!`)
     }
-    
+
+    const requestTimeStamp = new Date().getTime();
+    const message = `${addressRequested}:${requestTimeStamp}:starRegistry`;
     var validationTimeWindow = 300;
-    
-    var requestTimeStamp = new Date().getTime();
-    
-    var message = `${addressRequested}:${requestTimeStamp}:starRegistry`;
-    
     var response = {
-        addressRequested,
-        message,
-        validationTimeWindow,
+        address: addressRequested,
+        message: message,
+        validationTimeWindow: validationTimeWindow,
         requestTimeStamp: requestTimeStamp
     }
 
-    if (starRegistry.hasOwnProperty(addressRequested)) {
-        validationTimeWindow = starRegistry[addressRequested].validationTimeWindow;
+    if (mempool.hasOwnProperty(addressRequested)) {
+        var validationMemPoolTimeWindow = mempool[addressRequested].validationTimeWindow;
+        var messageMemPool = mempool[addressRequested].message;
+        var requestTimeStampMemPool = mempool[addressRequested].requestTimeStamp;
         return res.json({
-            addressRequested,
-            message,
-            validationTimeWindow,
-            requestTimeStamp: requestTimeStamp
+            address: addressRequested,
+            message: messageMemPool,
+            validationTimeWindow: validationMemPoolTimeWindow,
+            requestTimeStamp: requestTimeStampMemPool
         })
     }
 
     //add to the registry
-    starRegistry[addressRequested] = {
+    mempool[addressRequested] = {
         message,
         requestTimeStamp,
-        validationTimeWindow
+        validationTimeWindow,
+        valid: false
     }
 
     res.json(response)
 
     const interval = setInterval(() => {
-        starRegistry[addressRequested] && starRegistry[addressRequested].validationTimeWindow--
-        if (!starRegistry.hasOwnProperty(addressRequested) || starRegistry[addressRequested].validationTimeWindow <= 0) {
-            delete starRegistry[addressRequested]
+        mempool[addressRequested] && mempool[addressRequested].validationTimeWindow--
+        if (!mempool.hasOwnProperty(addressRequested) || mempool[addressRequested].validationTimeWindow <= 0) {
+            delete mempool[addressRequested]
             clearInterval(interval)
         }
     }, 1000)
 })
 
 app.post('/message-signature/validate', (req, res) => {
-    res.json({
-        error: 'Not Implemented'
-    })
+    const addressRequested = req.body.address;
+    const signatureRequested = req.body.signature;
+    let signatureVerified;
+
+    if (addressRequested === undefined || addressRequested.trim() === '' || signatureRequested === undefined || signatureRequested.trim() === '') {
+        return res.send(`Parameters not valid!`);
+    }
+
+    if (!mempool.hasOwnProperty(addressRequested)) {
+        return res.send(`Address not valid. Please be sure to make first a request validation with this address!`);
+    }
+
+    if (mempool[addressRequested].validationTimeWindow > 0) {
+        var validationMemPoolTimeWindow = mempool[addressRequested].validationTimeWindow;
+        var messageMemPool = mempool[addressRequested].message;
+        var requestTimeStampMemPool = mempool[addressRequested].requestTimeStamp;
+
+        signatureVerified = bitcoinMessage.verify(messageMemPool, addressRequested, signatureRequested);
+
+        if (signatureVerified === true) {
+            mempool[addressRequested].valid = true;
+        }
+        return res.json({
+            registerStar: signatureVerified,
+            status: {
+                address: addressRequested,
+                message: messageMemPool,
+                validationWindow: validationMemPoolTimeWindow,
+                requestTimeStamp: requestTimeStampMemPool,
+                messageSignature: signatureVerified ? 'valid' : 'invalid'
+            }
+        })
+    } else {
+        return res.send(`timed out reached!`);
+    }
 })
 
 app.use(function(err, req, res, next) {

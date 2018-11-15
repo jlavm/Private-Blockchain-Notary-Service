@@ -1,5 +1,5 @@
 const encodeStory = value => {
-    return Buffer.from(value).slice(0, 500).toString('hex')
+    return Buffer.from(value, 'ascii').toString('hex')
 }
 
 const decodeStory = value => {
