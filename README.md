@@ -79,7 +79,7 @@ With body:
 
 ```
 {
-  "address": "1JHoNc4exPSTgwduGPAjMkPYC7egxVehs8"
+  "address": "19xaiMqayaNrn3x7AjV5cU4Mk5f5prRVpL"
 }
 ```
 
@@ -89,14 +89,14 @@ With curl:
 curl -X "POST" "http://localhost:8000/requestValidation" \
      -H 'Content-Type: application/json; charset=utf-8' \
      -d $'{
-  "address": "142BDCeSGbXjWKaAnYXbMpZ6sbrSAo3DpZ"
+  "address": "19xaiMqayaNrn3x7AjV5cU4Mk5f5prRVpL"
 }'
 ```
 
 ### POST: /message-signature/validate
 
 ```
-localhost:8000//message-signature/validate
+localhost:8000/message-signature/validate
 ```
 
 With body:
@@ -130,7 +130,7 @@ With body:
 
 ```
 {
-  "address": "1JHoNc4exPSTgwduGPAjMkPYC7egxVehtt",
+  "address": "19xaiMqayaNrn3x7AjV5cU4Mk5f5prRVpL",
   "star": {
     "dec": "30h",
     "ra": "30h 30m 30.0s",
@@ -147,7 +147,7 @@ With curl:
 curl -X "POST" "http://localhost:8000/block" \
      -H 'Content-Type: application/json; charset=utf-8' \
      -d $'{
-  "address": "142BDCeSGbXjWKaAnYXbMpZ6sbrSAo3DpZ",
+  "address": "19xaiMqayaNrn3x7AjV5cU4Mk5f5prRVpL",
   "star": {
     "dec": "-26° 29'\'' 24.9",
     "ra": "16h 29m 1.0s",
