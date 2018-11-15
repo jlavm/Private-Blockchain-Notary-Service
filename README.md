@@ -29,7 +29,7 @@ npm install
 1. Run command
 
 ```
-node index.js
+npm start
 ```
 
 and now you can check the project running in the browser typing:

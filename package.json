@@ -4,6 +4,7 @@
   "description": "Implements a Star Registry service that allows users to claim ownership of their favorite star in the night sky",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Jorge Lavin Montoro",
